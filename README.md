@@ -4,7 +4,7 @@
 
 1. clone this repo
 2. cd answers
-3. take 7_1 for example, run "python3 answers/7_1.py"
+3. take 7_1 for example, run "python3 7_1.py"
 
 ## Answers screenshots
 
