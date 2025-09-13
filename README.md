@@ -18,4 +18,4 @@
 
 3. 7_3.py
 
-![alt text](image-2.png)
+![alt text](image-3.png)
