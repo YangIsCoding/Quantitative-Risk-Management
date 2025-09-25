@@ -2,7 +2,6 @@ import pandas as pd
 from scipy import stats
 
 def fit_normal(data):
-    # Use MLE to fit normal distribution
     mu, sigma = stats.norm.fit(data)
     return mu, sigma
 
@@ -18,5 +17,5 @@ result = pd.DataFrame({
     'sigma': [sigma_hat]
 })
 
-pd.set_option('display.float_format', '{:.17f}'.format)
+pd.set_option('display.float_format', '{:.18f}'.format)
 print(result)

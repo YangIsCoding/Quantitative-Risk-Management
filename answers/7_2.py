@@ -36,5 +36,5 @@ if __name__ == "__main__":
         "nu": [nu_hat]
     })
 
-    pd.set_option('display.float_format', '{:.15f}'.format)
+    pd.set_option('display.float_format', '{:.18f}'.format)
     print(result)
