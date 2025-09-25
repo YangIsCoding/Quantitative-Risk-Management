@@ -136,18 +136,31 @@ def return_calculate(prices, method="DISCRETE", dateColumn=None):
         if dateColumn:
             # Keep date column but don't calculate returns for it
             price_cols = [col for col in prices.columns if col != dateColumn]
-            result = pd.DataFrame()
+            
+            # Create result DataFrame with proper column order
+            result_data = {}
             
             if dateColumn in prices.columns:
-                result[dateColumn] = prices[dateColumn].iloc[1:].reset_index(drop=True)
+                result_data[dateColumn] = prices[dateColumn].iloc[1:].reset_index(drop=True)
             
+            # Calculate returns for all price columns at once
+            if method.upper() == "DISCRETE":
+                returns = prices[price_cols].pct_change().iloc[1:].reset_index(drop=True)
+            elif method.upper() == "LOG":
+                returns = np.log(prices[price_cols] / prices[price_cols].shift(1)).iloc[1:].reset_index(drop=True)
+            
+            # Add returns to result data
             for col in price_cols:
-                if method.upper() == "DISCRETE":
-                    result[col] = prices[col].pct_change().iloc[1:]
-                elif method.upper() == "LOG":
-                    result[col] = np.log(prices[col] / prices[col].shift(1)).iloc[1:]
+                result_data[col] = returns[col]
             
-            return result.reset_index(drop=True)
+            # Create DataFrame with correct column order
+            if dateColumn:
+                columns = [dateColumn] + price_cols
+            else:
+                columns = price_cols
+                
+            result = pd.DataFrame(result_data, columns=columns)
+            return result
         else:
             if method.upper() == "DISCRETE":
                 return prices.pct_change().iloc[1:]
