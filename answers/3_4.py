@@ -11,5 +11,4 @@ if __name__ == "__main__":
     
     result = pd.DataFrame(psd_matrix, columns=cin.columns, index=cin.columns)
     
-    result.to_csv("../testfiles/data/testout_3.4.csv", index=False)
     print(result)
