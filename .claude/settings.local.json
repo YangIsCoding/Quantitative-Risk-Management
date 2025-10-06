@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cd:*)",
+      "Bash(python:*)",
+      "Read(/Users/yong/Desktop/Duke/**)",
+      "Read(/Users/yong/Desktop/Duke/**)",
+      "Read(/Users/yong/Desktop/Duke/**)",
+      "Read(/Users/yong/Desktop/Duke/**)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

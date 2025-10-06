@@ -65,38 +65,56 @@ def ewCovar(data, lambda_val):
 
 def near_psd(matrix, epsilon=0.0):
     """
-    Find the nearest positive semi-definite matrix using eigenvalue decomposition
+    Find the nearest positive semi-definite matrix preserving original variances
     """
     # Ensure the matrix is symmetric
     A = (matrix + matrix.T) / 2
     
-    # Eigenvalue decomposition
-    eigenvals, eigenvecs = np.linalg.eigh(A)
+    # Extract standard deviations (preserve original variances)
+    std_devs = np.sqrt(np.diag(A))
+    
+    # Convert to correlation matrix
+    corr_matrix = A / np.outer(std_devs, std_devs)
+    
+    # Eigenvalue decomposition on correlation matrix
+    eigenvals, eigenvecs = np.linalg.eigh(corr_matrix)
     
     # Set negative eigenvalues to epsilon (typically 0)
     eigenvals = np.maximum(eigenvals, epsilon)
     
-    # Reconstruct the matrix
-    result = eigenvecs @ np.diag(eigenvals) @ eigenvecs.T
+    # Reconstruct correlation matrix
+    corr_result = eigenvecs @ np.diag(eigenvals) @ eigenvecs.T
+    
+    # Ensure diagonal is exactly 1 (renormalize)
+    np.fill_diagonal(corr_result, 1.0)
+    
+    # Convert back to covariance matrix (restore original variances)
+    result = corr_result * np.outer(std_devs, std_devs)
     
     return result
 
 def higham_nearestPSD(A, maxIts=100, tol=1e-8):
     """
-    Higham's 2002 algorithm for finding the nearest PSD matrix
+    Higham's 2002 algorithm for finding the nearest PSD matrix preserving original variances
     """
     n = A.shape[0]
     
     # Ensure matrix is symmetric
     A = (A + A.T) / 2
     
-    # Initialize
-    Y = A.copy()
-    Delta_S = np.zeros_like(A)
+    # Extract standard deviations (preserve original variances)
+    std_devs = np.sqrt(np.diag(A))
+    
+    # Convert to correlation matrix
+    corr_matrix = A / np.outer(std_devs, std_devs)
+    
+    # Initialize for Higham's algorithm on correlation matrix
+    Y = corr_matrix.copy()
+    Delta_S = np.zeros_like(corr_matrix)
     
     for k in range(maxIts):
-        # Step 1: Project onto S (symmetric matrices with 0 diagonal)
-        # For general matrices, this step is skipped
+        # Step 1: Project onto S (symmetric matrices with unit diagonal)
+        # For correlation matrices, ensure diagonal is 1
         
         # Step 2: Project onto positive semidefinite cone
         eigenvals, eigenvecs = np.linalg.eigh(Y - Delta_S)
@@ -106,8 +124,9 @@ def higham_nearestPSD(A, maxIts=100, tol=1e-8):
         # Step 3: Update Delta_S
         Delta_S = X - (Y - Delta_S)
         
-        # Step 4: Project back to original constraint set
-        Y_new = X
+        # Step 4: Project back to correlation constraint (unit diagonal)
+        Y_new = X.copy()
+        np.fill_diagonal(Y_new, 1.0)
         
         # Check convergence
         if np.linalg.norm(Y - Y_new, 'fro') <= tol:
@@ -115,7 +134,10 @@ def higham_nearestPSD(A, maxIts=100, tol=1e-8):
         
         Y = Y_new
     
-    return Y
+    # Convert back to covariance matrix (restore original variances)
+    result = Y * np.outer(std_devs, std_devs)
+    
+    return result
 
 def chol_psd(matrix):
     """
