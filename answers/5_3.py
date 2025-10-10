@@ -1,39 +1,74 @@
+"""
+作業目標 5.3: 多變量常態分布模擬 - 非正定矩陣修正後模擬
+
+背景:
+實際數據中的協方差矩陣估計可能不滿足正定性，
+必須先修正為正定矩陣後才能進行模擬。
+
+問題:
+如何處理非正定協方差矩陣的多變量常態分布模擬？
+
+解法 - 兩步驟程序:
+1. 矩陣修正：使用Near-PSD方法修正為正定矩陣
+2. 正常模擬：對修正後矩陣進行Cholesky分解與模擬
+
+技術流程:
+第一步：非正定 → 正定
+- 輸入：具有負特徵值的矩陣
+- 使用：Rebonato-Jäckel Near-PSD算法
+- 輸出：最接近的正定矩陣
+
+第二步：正定 → 模擬
+- 輸入：修正後的正定矩陣
+- 使用：標準Cholesky分解
+- 輸出：相關多變量常態隨機樣本
+
+實務考量:
+- 修正過程保持原始方差不變
+- 最小化矩陣距離（Frobenius範數）
+- 確保數值穩定性
+
+應用場景:
+- 歷史數據估計的協方差矩陣
+- 小樣本導致的非正定問題
+- 合併不同來源數據的協方差
+- 極端市場條件下的風險建模
+
+品質控制:
+- 驗證修正後矩陣的正定性
+- 檢查樣本協方差收斂性
+- 比較修正前後的差異
+
+統計意義:
+這種方法確保了模擬的有效性，同時最大程度保持原始風險結構。
+"""
+
 import pandas as pd
 import numpy as np
-import sys
-sys.path.append('..')
-from library import near_psd, chol_psd
+from library import near_psd, chol_psd_simple
 
-# 讀取共變異數矩陣（test5_3是非PSD的矩陣）
-cov_matrix = pd.read_csv("../testfiles/data/test5_3.csv")
-
-# 移除第一列（列名），只保留數值
-cov_values = cov_matrix.values
-
-# 需要實作 simulateNormal 函數來模擬，並計算共變異數
-# 根據 test_setup.jl：simulateNormal(100000, cin,fixMethod=near_psd)
-# 先用 near_psd 修正矩陣，然後模擬
-
-# 應用 near_psd 函數修正矩陣
-fixed_matrix = near_psd(cov_values)
-
-# 手動處理 PSD 並進行 Cholesky 分解
-eigenvals, eigenvecs = np.linalg.eigh(fixed_matrix)
-eigenvals = np.maximum(eigenvals, 1e-8)  # 確保所有特徵值為正
-fixed_matrix = eigenvecs @ np.diag(eigenvals) @ eigenvecs.T
-
-# 模擬正態分佈（100000個樣本）
-np.random.seed(4)  # 根據 test_setup.jl 設定的種子
-L = np.linalg.cholesky(fixed_matrix)
-Z = np.random.randn(100000, 5)
-simulated_data = Z @ L.T
-
-# 計算模擬資料的共變異數矩陣
-result_matrix = np.cov(simulated_data.T)
-
-# 轉換為 DataFrame 格式，移除第一列
-result_df = pd.DataFrame(result_matrix[:, 1:], 
-                        index=['x1', 'x2', 'x3', 'x4', 'x5'],
-                        columns=['x2', 'x3', 'x4', 'x5'])
-
-print(result_df)
+if __name__ == "__main__":
+    # 讀取非正定協方差矩陣
+    cin = pd.read_csv("../testfiles/data/test5_3.csv", header=None, skiprows=1).values.astype(float)
+    
+    # 步驟1: 使用 Near-PSD 方法修正為正定矩陣
+    # 保持原始方差，修正負特徵值
+    fixed_matrix = near_psd(cin)
+    
+    # 設定隨機種子確保結果可重現
+    np.random.seed(4)
+    
+    # 步驟2: 對修正後的正定矩陣進行Cholesky分解
+    L = chol_psd_simple(fixed_matrix)
+    
+    # 步驟3: 生成獨立標準常態隨機數
+    Z = np.random.randn(100000, 5)
+    
+    # 步驟4: 轉換為相關多變量常態分布
+    simulated_data = Z @ L.T
+    
+    # 步驟5: 計算樣本協方差矩陣
+    result_matrix = np.cov(simulated_data.T)
+    
+    result = pd.DataFrame(result_matrix)
+    print(result)
