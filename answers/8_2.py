@@ -72,6 +72,7 @@ from library import T
 if __name__ == "__main__":
     # 讀取數據，使用第7.2題相同的數據
     data = pd.read_csv("../testfiles/data/test7_2.csv")["x1"].values
+    print(data)
     
     # 使用library擬合t分布
     t_model = T()

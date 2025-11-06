@@ -46,44 +46,29 @@ PCA模擬是降維模擬的重要技術，透過保留主要成分降低計算�
 
 實務考量:
 需要在計算效率與精度之間找到平衡點。
+
+Cholesky：把所有路都保留，最完整，但比較複雜。
+
+PCA：只留最重要的路，速度快、夠像就好。
 """
 
 import pandas as pd
 import numpy as np
+from library import pca_simulation
 
 if __name__ == "__main__":
     # 讀取半正定協方差矩陣進行PCA模擬
     cin = pd.read_csv("../testfiles/data/test5_2.csv", header=None, skiprows=1).values.astype(float)
     
-    # 步驟1: 特徵值分解
-    eigenvals, eigenvecs = np.linalg.eigh(cin)
+    # 使用library中的pca_simulation函數進行PCA模擬
+    simulated_data, n_components, eigenvals, eigenvecs = pca_simulation(
+        cov_matrix=cin,
+        n_samples=100000,
+        explained_variance_ratio=0.99,
+        random_seed=4
+    )
     
-    # 步驟2: 按特徵值大小排序（從大到小）
-    idx = np.argsort(eigenvals)[::-1]
-    eigenvals = eigenvals[idx]
-    eigenvecs = eigenvecs[:, idx]
-    
-    # 步驟3: 選擇解釋99%方差的主成分數量
-    cumulative_explained = np.cumsum(eigenvals) / np.sum(eigenvals)
-    n_components = np.argmax(cumulative_explained >= 0.99) + 1
-    
-    # 步驟4: 保留選定的主成分
-    selected_eigenvals = eigenvals[:n_components]
-    selected_eigenvecs = eigenvecs[:, :n_components]
-    
-    # 設定隨機種子確保結果可重現
-    np.random.seed(4)
-    
-    # 步驟5: 在主成分空間生成隨機數
-    Z = np.random.randn(100000, n_components)
-    
-    # 步驟6: 縮放到主成分方差
-    scaled_Z = Z * np.sqrt(selected_eigenvals)
-    
-    # 步驟7: 轉換回原始變數空間
-    simulated_data = scaled_Z @ selected_eigenvecs.T
-    
-    # 步驟8: 計算樣本協方差矩陣
+    # 計算樣本協方差矩陣
     result_matrix = np.cov(simulated_data.T)
     
     result = pd.DataFrame(result_matrix)
