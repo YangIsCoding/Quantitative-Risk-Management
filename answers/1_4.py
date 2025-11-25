@@ -1,40 +1,31 @@
 """
-作業目標 1.4: 處理缺失值的相關係數矩陣計算 - Pairwise Method
+題目 1.4: 成對方法計算相關係數矩陣 (Pairwise Method for Correlation Matrix)
 
-背景:
-結合1.2和1.3的概念，使用Pairwise方法計算相關係數矩陣。
+問題描述：
+使用成對方法來計算相關係數矩陣。成對方法會為每對變數利用所有可用的觀察值
+來計算相關係數，這樣可以最大化使用可用資料，避免因為部分缺失值而丟失
+有用的資訊。
 
-問題:
-如何在保留最多數據的同時計算相關係數矩陣？
+目標：
+1. 載入包含缺失值的資料
+2. 使用成對方法計算相關係數矩陣
+3. 利用每對變數的所有可用觀察值
+4. 輸出完整的相關係數矩陣
 
-解法:
-每對變數單獨計算相關係數，使用該對變數都有值的所有觀察值。
-
-應用場景:
-- 高頻金融數據中不同時間點的缺失
-- 不同來源數據的合併
-- 傳感器數據的間歇性故障
-
-潛在問題:
-1. 相關係數矩陣可能不是正定的
-2. 不同相關係數基於不同樣本大小
-3. 需要檢查是否滿足正定性要求（對於某些應用如投資組合優化）
+解法流程：
+1. 讀取 test1.csv 資料
+2. 調用 Utils.pairwise_cov_corr() 以成對方式計算相關係數矩陣
+3. 直接輸出相關係數矩陣結果
 """
 
 import pandas as pd
-import numpy as np
-from library import missing_cov
+import library as Utils
 
-if __name__ == "__main__":
-    # 讀取包含缺失值的測試數據
-    data = pd.read_csv("../testfiles/data/test1.csv")
-    
-    # 使用 Pairwise 方法計算相關係數矩陣
-    # skipMiss=False: 每對變數單獨處理缺失值
-    # fun=np.corrcoef: 計算相關係數
-    corr_matrix = missing_cov(data.values, skipMiss=False, fun=np.corrcoef)
-    
-    # 將結果轉換為帶有變數名稱的DataFrame
-    result = pd.DataFrame(corr_matrix, columns=data.columns, index=data.columns)
-    
-    print(result)
+# Test 1.4: Pairwise Method for Correlation Matrix
+data = pd.read_csv("../testfiles/data/test1.csv")
+
+# Pairwise method: Calculate correlation for each pair using all available data
+_, corr_matrix = Utils.pairwise_cov_corr(data)
+
+# Convert to DataFrame (already has column names from pairwise_cov_corr)
+print(corr_matrix)

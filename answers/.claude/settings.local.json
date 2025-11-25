@@ -2,6 +2,7 @@
   "permissions": {
     "allow": [
       "Read(/Users/yong/Desktop/Duke/3rd Semester/Risk/assignments/testfiles/data/**)",
+      "Bash(cd:*)",
       "Bash(cd:*)"
     ],
     "deny": [],

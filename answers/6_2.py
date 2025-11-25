@@ -1,65 +1,37 @@
 """
-作業目標 6.2: 對數回報率計算 (Log Returns)
+題目 6.2: 對數報酬率計算 (Log Returns Calculation)
 
-背景:
-對數回報率（連續複利回報率）在金融理論中具有優良的統計性質，
-特別適合風險建模和時間序列分析。
+問題描述：
+從資產價格資料計算對數報酬率（連續複利報酬率）。對數報酬率的計算公式為：
+rt = ln(Pt/Pt-1) = ln(Pt) - ln(Pt-1)。對數報酬率具有時間可加性的優點，
+在量化金融中廣泛使用。
 
-問題:
-如何從價格時間序列計算對數回報率？
+目標：
+1. 載入包含價格資料的檔案
+2. 計算每個資產的對數報酬率
+3. 處理第一期的缺失值（因為沒有前期價格）
+4. 輸出對數報酬率資料
 
-解法 - 對數回報率公式:
-rt = ln(Pt/Pt-1) = ln(Pt) - ln(Pt-1)
-
-數學特性:
-- 時間可加性：多期回報 = 單期回報之和
-- 對稱性：上漲50%和下跌33.3%的對數回報大小相等
-- 常態性：更接近常態分布（統計分析優勢）
-- 連續性：便於微積分運算
-
-與離散回報率的關係:
-- 小幅變化時：rt^log ≈ rt^discrete
-- 大幅變化時：存在顯著差異
-- 轉換公式：rt^discrete = exp(rt^log) - 1
-
-應用優勢:
-- 風險模型（VaR、ES）
-- 時間序列分析（ARIMA、GARCH）
-- 期權定價模型（Black-Scholes）
-- 長期投資分析
-
-統計性質:
-- 更接近常態分布
-- 方差穩定性較好
-- 便於參數估計
-- 支持複利計算
-
-實務應用:
-- 波動率建模
-- 風險度量計算
-- 量化策略回測
-- 學術研究標準
-
-計算考量:
-- 處理零價格和負價格
-- 確保價格數據品質
-- 處理停牌和缺失數據
-
-理論基礎:
-幾何布朗運動假設下，對數價格遵循常態分布，
-使得對數回報率成為金融建模的自然選擇。
+解法流程：
+1. 讀取 test6.csv 價格資料
+2. 使用對數函數計算 ln(Pt/Pt-1)
+3. 移除第一行的 NaN 值
+4. 顯示前幾行資料作為驗證
 """
 
 import pandas as pd
 import numpy as np
-from library import return_calculate
 
-if __name__ == "__main__":
-    # 讀取價格數據
-    prices = pd.read_csv("../testfiles/data/test6.csv")
-    
-    # 計算對數回報率（連續複利回報率）
-    # rt = ln(Pt/Pt-1) = ln(Pt) - ln(Pt-1)
-    returns = return_calculate(prices, method="LOG", dateColumn="Date")
-    
-    print(returns.head())
+# Test 6.2: Log Returns Calculation
+prices = pd.read_csv("../testfiles/data/test6.csv")
+
+# Calculate log returns: rt = ln(Pt/Pt-1) = ln(Pt) - ln(Pt-1)
+# Assuming first column is date and rest are prices
+returns = prices.copy()
+for col in prices.columns:
+    if col != "Date":
+        returns[col] = np.log(prices[col] / prices[col].shift(1))
+
+# Remove first row (NaN values)
+returns = returns.dropna()
+print(returns.head())

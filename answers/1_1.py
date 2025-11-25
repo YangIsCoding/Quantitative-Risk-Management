@@ -1,36 +1,33 @@
 """
-作業目標 1.1: 處理缺失值的協方差矩陣計算 - Skip Missing Method
+題目 1.1: 跳過缺失值方法計算共變異數矩陣 (Skip Missing Method for Covariance Matrix)
 
-背景:
-在金融數據分析中，經常遇到缺失值問題。計算協方差矩陣時需要妥善處理這些缺失值。
+問題描述：
+使用跳過缺失值的方法來計算共變異數矩陣。當資料中有缺失值（NaN）時，
+需要先移除包含缺失值的觀察值（整行），然後計算剩餘資料的共變異數矩陣。
 
-問題:
-當數據中有缺失值時，如何計算可靠的協方差矩陣？
+目標：
+1. 載入包含缺失值的資料
+2. 移除包含任何缺失值的資料行
+3. 計算清理後資料的共變異數矩陣
+4. 以 DataFrame 格式輸出結果
 
-解法 1 - Skip Missing (listwise deletion):
-移除任何包含缺失值的整個觀察值（行），只使用完整的觀察值計算協方差。
-
-優點: 計算簡單，結果一致
-缺點: 可能丟失大量數據，特別是當缺失值分散時
-
-數學公式:
-Cov(X,Y) = E[(X-μx)(Y-μy)] = (1/n)Σ(xi-μx)(yi-μy)
-其中只使用xi和yi都不為缺失值的觀察值
+解法流程：
+1. 讀取 test1.csv 資料
+2. 使用 dropna() 移除包含 NaN 的行
+3. 調用 Utils.calculate_cov() 計算共變異數矩陣
+4. 將結果轉換為帶有行列標籤的 DataFrame
 """
 
 import pandas as pd
-import numpy as np
-from library import missing_cov
+import library as Utils
 
-if __name__ == "__main__":
-    # 讀取包含缺失值的測試數據
-    data = pd.read_csv("../testfiles/data/test1.csv")
-    
-    # 使用 Skip Missing 方法計算協方差矩陣
-    # skipMiss=True: 移除包含任何缺失值的整行
-    cov_matrix = missing_cov(data.values, skipMiss=True)
-    
-    # 將結果轉換為帶有變數名稱的DataFrame
-    result = pd.DataFrame(cov_matrix, columns=data.columns, index=data.columns)
-    
-    print(result)
+# Test 1.1: Skip Missing Method for Covariance Matrix
+data = pd.read_csv("../testfiles/data/test1.csv")
+
+# Skip Missing: Remove rows with any NaN values, then calculate covariance
+data_clean = data.dropna()
+cov_matrix = Utils.calculate_cov(data_clean.values)
+
+# Convert to DataFrame with column names
+result = pd.DataFrame(cov_matrix, columns=data.columns, index=data.columns)
+print(result)

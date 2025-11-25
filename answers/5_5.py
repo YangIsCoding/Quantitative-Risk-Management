@@ -1,75 +1,47 @@
 """
-作業目標 5.5: 主成分分析模擬 (PCA Simulation)
+題目 5.5: 主成分分析模擬 (PCA Simulation)
 
-背景:
-PCA模擬是降維模擬的重要技術，透過保留主要成分降低計算複雜度，
-同時保持大部分的方差解釋能力。
+問題描述：
+使用主成分分析（PCA）降維技術處理高維共變異數矩陣，然後進行
+多變量常態分佈模擬。PCA 可以減少計算複雜度並處理接近奇異的矩陣，
+同時保留大部分變異性。
 
-問題:
-如何使用主成分分析進行高效的多變量模擬？
+目標：
+1. 載入高維共變異數矩陣
+2. 使用 PCA 降維至保留 99% 變異性的維度
+3. 使用降維後的矩陣進行多變量常態分佈模擬
+4. 驗證 PCA 降維的效果
 
-解法 - PCA降維模擬法:
-1. 特徵值分解：Σ = QΛQ'
-2. 選擇成分：保留99%累積方差解釋度的主成分
-3. 降維模擬：在主成分空間生成隨機數
-4. 空間還原：轉換回原始變數空間
-
-數學公式:
-設原始協方差矩陣 Σ = QΛQ'
-選擇前k個主成分滿足：Σᵢ₌₁ᵏ λᵢ / Σᵢ₌₁ⁿ λᵢ ≥ 0.99
-
-模擬步驟:
-1. Z ~ N(0,I_k) (k維獨立隨機數)
-2. Y = Z√Λₖ (縮放到主成分方差)
-3. X = YQₖ' (轉換回原始空間)
-
-優點:
-- 降低模擬維度（k < n）
-- 計算效率大幅提升
-- 保留主要風險因子
-- 數值穩定性好
-
-參數設定:
-- 解釋度閾值：99%（平衡精度與效率）
-- 樣本數：100,000
-- 隨機種子：4
-
-應用場景:
-- 大型投資組合風險模擬
-- 高維度因子模型
-- 計算密集的風險度量
-- 實時風險監控系統
-
-效果評估:
-比較PCA模擬與完整模擬的協方差矩陣差異，
-驗證降維對風險結構的保持程度。
-
-實務考量:
-需要在計算效率與精度之間找到平衡點。
-
-Cholesky：把所有路都保留，最完整，但比較複雜。
-
-PCA：只留最重要的路，速度快、夠像就好。
+解法流程：
+1. 讀取 test5_2.csv 檔案中的共變異數矩陣
+2. 使用 Utils.pca_covariance() 進行 PCA 降維
+3. 設定保留 99% 變異性的閾值
+4. 使用降維後的共變異數矩陣進行模擬
+5. 設定隨機種子為4以確保結果可重現
+6. 計算生成樣本的共變異數矩陣
+7. 輸出結果矩陣
 """
 
 import pandas as pd
 import numpy as np
-from library import pca_simulation
+import library as Utils
 
-if __name__ == "__main__":
-    # 讀取半正定協方差矩陣進行PCA模擬
-    cin = pd.read_csv("../testfiles/data/test5_2.csv", header=None, skiprows=1).values.astype(float)
-    
-    # 使用library中的pca_simulation函數進行PCA模擬
-    simulated_data, n_components, eigenvals, eigenvecs = pca_simulation(
-        cov_matrix=cin,
-        n_samples=100000,
-        explained_variance_ratio=0.99,
-        random_seed=4
-    )
-    
-    # 計算樣本協方差矩陣
-    result_matrix = np.cov(simulated_data.T)
-    
-    result = pd.DataFrame(result_matrix)
-    print(result)
+# Test 5.5: PCA Simulation
+cin = pd.read_csv("../testfiles/data/test5_2.csv", header=None, skiprows=1).values.astype(float)
+
+# Use PCA to reduce dimensionality and simulate
+cin_df = pd.DataFrame(cin)
+cov_pca, n_components, explained_ratios = Utils.pca_covariance(cin_df, threshold=0.99)
+
+# Generate samples using the PCA-reduced covariance matrix
+sampled_data = Utils.simulate_multivariate_normal(
+    mean=np.zeros(cov_pca.shape[0]),
+    cov=cov_pca.values,
+    n_samples=100000,
+    seed=4
+)
+
+# Calculate sample covariance matrix
+result_matrix = Utils.calculate_cov(sampled_data)
+result = pd.DataFrame(result_matrix)
+print(result)

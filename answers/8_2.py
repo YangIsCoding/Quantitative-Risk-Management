@@ -1,97 +1,32 @@
 """
-作業目標 8.2: t分布風險值計算 (t-Distribution VaR)
+題目 8.2: t 分佈 VaR 計算 (t-Distribution VaR Calculation)
 
-背景:
-相對於常態分布，t分布具有厚尾特性，能更好地捕捉金融市場的極端風險，
-提供更保守和現實的VaR估計。
+問題描述：
+使用 t 分佈假設計算風險值（VaR）。相較於常態分佈，t 分佈具有更厚的尾部，
+更適合描述金融市場的極端事件，通常會給出更保守（更大）的 VaR 估計值。
 
-問題:
-如何基於t分布假設計算VaR？
+目標：
+1. 載入報酬率資料
+2. 假設報酬率服從 t 分佈
+3. 計算 5% 信心水準的 VaR
+4. 比較與常態分佈 VaR 的差異
 
-解法 - t分布參數法VaR:
-使用第7.2題擬合的t分布參數計算分位數
-
-VaR計算公式:
-VaR_α = -F_t^(-1)(α; ν, μ, σ)
-其中 α = 0.05 (5%機率)
-
-t分布參數:
-- ν (nu): 自由度，控制厚尾程度
-- μ (mu): 位置參數
-- σ (sigma): 尺度參數
-
-厚尾效應:
-- ν越小，尾部越厚
-- 極端事件機率較常態分布高
-- VaR值通常較常態分布大
-
-與常態VaR的比較:
-相同點：
-- 同樣計算5%分位數
-- 同樣區分絕對和相對VaR
-
-差異點：
-- t分布考慮厚尾特性
-- 提供更保守的風險估計
-- 更適合金融數據特性
-
-實務優勢:
-- 更準確的極端風險評估
-- 符合監管機構的保守原則
-- 減少VaR突破次數
-
-統計理論:
-當ν→∞時，t分布收斂到常態分布
-當ν較小時，顯著偏離常態分布
-
-風險管理意義:
-- 更好的資本配置
-- 更準確的風險預算
-- 更可靠的壓力測試
-
-模型驗證:
-- 回測分析（突破頻率）
-- 與歷史模擬法比較
-- Kupiec檢驗
-
-應用場景:
-- 高波動市場期間
-- 新興市場投資
-- 衍生品風險管理
-- 另類投資策略
-
-計算考量:
-需要數值方法計算t分布的分位數函數。
+解法流程：
+1. 讀取 test7_2.csv 檔案中的報酬率資料
+2. 提取 x1 欄位作為報酬率時間序列
+3. 調用 Utils.var_from_returns() 以 t 分佈計算 VaR
+4. 設定 α=0.05（95% 信心水準）
+5. 輸出 VaR 計算結果
 """
 
 import pandas as pd
-import numpy as np
-from scipy import stats
-from library import T
+import library as Utils
 
-if __name__ == "__main__":
-    # 讀取數據，使用第7.2題相同的數據
-    data = pd.read_csv("../testfiles/data/test7_2.csv")["x1"].values
-    print(data)
-    
-    # 使用library擬合t分布
-    t_model = T()
-    t_model.fit(data)
-    
-    # 提取擬合參數
-    nu = t_model.fitted_parameters[0]     # 自由度
-    mu = t_model.fitted_parameters[1]     # 位置參數
-    sigma = t_model.fitted_parameters[2]  # 尺度參數
-    
-    # 計算t分布VaR (5%信心水準)
-    # 使用負號因為VaR表示損失（正值）
-    var_absolute = -stats.t.ppf(0.05, df=nu, loc=mu, scale=sigma)
-    var_diff = -stats.t.ppf(0.05, df=nu, loc=0, scale=sigma)
-    
-    # 整理結果
-    result = pd.DataFrame({
-        'VaR Absolute': [var_absolute],        # 絕對VaR
-        'VaR Diff from Mean': [var_diff]      # 相對VaR
-    })
-    
-    print(result)
+# Test 8.2: t-Distribution VaR Calculation
+data = pd.read_csv("../testfiles/data/test7_2.csv")
+returns = data["x1"]
+
+# Calculate VaR using t-distribution assumption
+result_dict = Utils.var_from_returns(returns, alpha=0.05, dist="t")
+result = pd.DataFrame([result_dict])
+print(result)

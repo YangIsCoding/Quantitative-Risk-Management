@@ -1,66 +1,46 @@
 """
-作業目標 2.3: 混合指數加權協方差矩陣 (混合λ參數)
+題目 2.3: 混合指數移動平均共變異數矩陣 (Mixed EWMA Covariance Matrix)
 
-背景:
-在實務中，方差和相關係數可能有不同的持續性特徵：
-- 方差（波動率）變化較快，需要較小的λ
-- 相關係數結構變化較慢，可以用較大的λ
+問題描述：
+建立混合指數移動平均共變異數矩陣，結合不同衰減參數的優點。
+使用較長記憶的 λ=0.97 來計算相關係數（捕捉長期關聯性），
+使用較短記憶的 λ=0.94 來計算變異數（更快響應波動性變化）。
 
-問題:
-如何結合不同衰減參數的優勢？
+目標：
+1. 載入時間序列資料
+2. 分別使用兩個不同的 λ 值計算指數加權矩陣
+3. 從 λ=0.97 提取相關係數矩陣
+4. 從 λ=0.94 提取標準差向量
+5. 結合兩者建立混合共變異數矩陣
 
-解法 - 混合EWMA方法:
-1. 用λ=0.97計算相關係數矩陣（長記憶）
-2. 用λ=0.94計算方差（短記憶）
-3. 重新組合得到最終協方差矩陣
-
-數學公式:
-Σ = D_var * R_corr * D_var
-其中：
-- D_var: 來自λ=0.94的標準差對角矩陣
-- R_corr: 來自λ=0.97的相關係數矩陣
-
-實現步驟:
-1. 計算EW相關係數（λ=0.97）-> 提取標準差sd1
-2. 計算EW協方差（λ=0.94）-> 提取標準差的倒數sd
-3. 組合：D(sd1) * D(sd) * Cov * D(sd) * D(sd1)
-
-優點:
-1. 方差快速適應波動率叢聚
-2. 相關係數保持結構穩定性
-3. 避免過度反應帶來的雜訊
-
-應用:
-- 複雜投資組合的風險建模
-- 多因子風險模型
-- 結構化產品定價
-
-實務意義:
-這種方法在2008年金融危機等極端市場條件下表現更穩健。
+解法流程：
+1. 讀取 test2.csv 資料
+2. 使用 λ=0.97 計算長期共變異數和相關係數矩陣
+3. 使用 λ=0.94 計算短期共變異數矩陣
+4. 從各自的共變異數矩陣提取標準差
+5. 使用公式 Σ = D(std_94) * corr_97 * D(std_94) 組合結果
+6. 輸出混合共變異數矩陣
 """
 
 import pandas as pd
 import numpy as np
-from library import ewCovar
+import library as Utils
 
-if __name__ == "__main__":
-    # 讀取測試數據
-    data = pd.read_csv("../testfiles/data/test2.csv")
-    
-    # 步驟1: 用λ=0.97計算相關係數矩陣（長記憶）
-    cout = ewCovar(data.values, 0.97)
-    sd1 = np.sqrt(np.diag(cout))  # 提取標準差
-    
-    # 步驟2: 用λ=0.94計算方差（短記憶，對波動更敏感）
-    cout = ewCovar(data.values, 0.94)
-    sd = 1.0 / np.sqrt(np.diag(cout))  # 計算標準差的倒數
-    
-    # 步驟3: 重新組合 - 結合短記憶方差和長記憶相關係數
-    # 公式: Σ = D(sd1) * D(sd^-1) * Cov * D(sd^-1) * D(sd1)
-    # 這等效於將λ=0.94的協方差矩陣重新縮放到λ=0.97的方差水平
-    result_matrix = np.diag(sd1) @ np.diag(sd) @ cout @ np.diag(sd) @ np.diag(sd1)
-    
-    # 將結果轉換為帶有變數名稱的DataFrame
-    result = pd.DataFrame(result_matrix, columns=data.columns, index=data.columns)
-   
-    print(result)
+# Test 2.3: Mixed EWMA Covariance Matrix
+data = pd.read_csv("../testfiles/data/test2.csv")
+
+# Step 1: Calculate correlation matrix with λ=0.97 (long memory)
+cov_97, corr_97 = Utils.ew_cov_corr_normalized(data, lam=0.97)
+std_97 = np.sqrt(np.diag(cov_97))
+
+# Step 2: Calculate covariance matrix with λ=0.94 (short memory for variances)
+cov_94, corr_94 = Utils.ew_cov_corr_normalized(data, lam=0.94)
+std_94 = np.sqrt(np.diag(cov_94))
+
+# Step 3: Combine - use correlation from λ=0.97 with variances from λ=0.94
+# Formula: Σ = D(std_94) * corr_97 * D(std_94)
+result_matrix = Utils._to_cov_from_corr(corr_97.values, std_94)
+
+# Convert to DataFrame with column names
+result = pd.DataFrame(result_matrix, columns=data.columns, index=data.columns)
+print(result)

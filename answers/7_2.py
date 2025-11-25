@@ -1,78 +1,40 @@
 """
-作業目標 7.2: t分布參數估計 (t-Distribution Fitting)
+題目 7.2: t 分佈參數估計 (t-Distribution Parameter Estimation)
 
-背景:
-t分布在金融建模中比常態分布更適合描述金融回報，
-因為它具有厚尾特性，能更好地捕捉極端事件。
+問題描述：
+使用最大概似估計法來估計 t 分佈的參數（位置參數 μ、尺度參數 σ、
+自由度 ν）。t 分佈比常態分佈有更厚的尾部，更適合描述金融市場中
+極端事件發生的機率。
 
-問題:
-如何估計t分布的參數？
+目標：
+1. 載入樣本資料
+2. 使用 MLE 方法估計 t 分佈參數
+3. 估計位置參數 μ（類似均值）
+4. 估計尺度參數 σ（類似標準差）
+5. 估計自由度 ν（控制尾部厚度）
 
-解法 - 最大概似估計法:
-t分布有三個參數：
-- ν (nu): 自由度參數，控制厚尾程度
-- μ (mu): 位置參數（中心）
-- σ (sigma): 尺度參數（分散程度）
-
-分布特性:
-密度函數：f(x) = Γ((ν+1)/2) / (√νπ Γ(ν/2)) * (1 + (x-μ)²/(νσ²))^(-(ν+1)/2)
-
-參數意義:
-- ν → ∞: 收斂到常態分布
-- ν < 4: 峰度無限大（超厚尾）
-- ν = 1: 柯西分布（無限方差）
-
-厚尾特性:
-- P(|X| > k) 比常態分布大
-- 更好描述金融市場的極端波動
-- 考慮"黑天鵝"事件的影響
-
-估計挑戰:
-- 概似函數複雜，需要數值優化
-- 參數間存在相關性
-- 需要良好的初始值
-
-應用優勢:
-- 更準確的VaR估計
-- 更保守的風險評估
-- 更符合金融數據實際分布
-
-模型檢驗:
-- QQ圖比較
-- Kolmogorov-Smirnov檢驗
-- Anderson-Darling檢驗
-
-實務考量:
-- 樣本大小影響估計精度
-- 異常值對估計的影響
-- 時間變化的參數穩定性
-
-風險管理應用:
-t分布的厚尾特性使其在極端風險度量中表現更佳。
+解法流程：
+1. 讀取 test7_2.csv 檔案中的樣本資料
+2. 提取 x1 欄位的數值
+3. 使用 scipy.stats.t.fit() 進行參數估計
+4. 輸出估計的 μ、σ 和 ν 參數值
 """
 
 import pandas as pd
 import numpy as np
-from library import T
+from scipy import stats
 
-if __name__ == "__main__":
-    # 讀取數據進行t分布擬合
-    data = pd.read_csv("../testfiles/data/test7_2.csv")["x1"].values
-    
-    # 使用library中的T類別進行最大概似估計
-    t_model = T()
-    t_model.fit(data)
-    
-    # 提取擬合的參數 [自由度, 位置, 尺度]
-    nu = t_model.fitted_parameters[0]     # 自由度（厚尾程度）
-    mu = t_model.fitted_parameters[1]     # 位置參數
-    sigma = t_model.fitted_parameters[2]  # 尺度參數
-    
-    # 整理結果
-    result = pd.DataFrame({
-        "mu": [mu],
-        "sigma": [sigma],
-        "nu": [nu]
-    })
-    
-    print(result)
+# Test 7.2: t-Distribution Parameter Estimation
+data = pd.read_csv("../testfiles/data/test7_2.csv")["x1"].values
+
+# Use scipy.stats.t to fit t-distribution
+nu, mu, sigma = stats.t.fit(data)
+
+# Prepare result
+result = pd.DataFrame({
+    "mu": [mu],
+    "sigma": [sigma], 
+    "nu": [nu]
+})
+
+print(result)

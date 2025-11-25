@@ -1,47 +1,29 @@
 """
-作業目標 3.2: 非正定相關係數矩陣修正 - Near-PSD方法
+題目 3.2: 近正半定相關係數矩陣修正 (Near-PSD Correlation Matrix Correction)
 
-背景:
-承接第1.4題的Pairwise相關係數矩陣，該方法雖保留最多數據，
-但結果矩陣可能不滿足正定性要求。
+問題描述：
+修正非正半定的相關係數矩陣，確保其滿足正半定性質。相關係數矩陣
+必須是正半定的，以確保在統計建模和風險分析中的數學一致性。
+Near-PSD 方法尋找最接近原始矩陣的正半定矩陣。
 
-問題:
-如何修正非正定的相關係數矩陣？
+目標：
+1. 載入可能非正半定的相關係數矩陣
+2. 應用 Near-PSD 修正方法
+3. 確保修正後矩陣保持相關係數的性質（對角線為1）
+4. 輸出修正後的相關係數矩陣
 
-解法 - Rebonato-Jäckel (Near-PSD) 方法:
-由於輸入已經是相關係數矩陣（對角線為1），
-直接應用特徵值修正即可：
-
-步驟:
-1. 特徵值分解：R = VΛV'
-2. 負特徵值歸零：Λ+ = max(Λ, 0)
-3. 縮放步驟：計算縮放因子保持對角線為1
-4. 重建矩陣：R+ = VΛ+V'
-5. 標準化：確保 diag(R+) = 1
-
-與3.1的差異:
-- 3.1: 協方差→相關係數→修正→協方差（保持原始方差）
-- 3.2: 相關係數→修正→相關係數（保持對角線為1）
-
-應用:
-- 配對交易中的相關性修正
-- 因子模型的相關矩陣調整
-- 統計套利策略的數值穩定性
+解法流程：
+1. 讀取 testout_1.4.csv 檔案（來自題目 1.4 的輸出）
+2. 調用 Utils.near_psd_correlation() 進行 Near-PSD 修正
+3. 輸出修正後的正半定相關係數矩陣
 """
 
 import pandas as pd
-import numpy as np
-from library import near_psd
+import library as Utils
 
-if __name__ == "__main__":
-    # 讀取第1.4題的Pairwise相關係數矩陣（可能非正定）
-    cin = pd.read_csv("../testfiles/data/testout_1.4.csv")
-    
-    # 使用 Rebonato-Jäckel 方法修正為正定相關係數矩陣
-    # 對於相關係數矩陣，保持對角線為1
-    psd_matrix = near_psd(cin.values)
-    
-    # 將結果轉換為帶有變數名稱的DataFrame
-    result = pd.DataFrame(psd_matrix, columns=cin.columns, index=cin.columns)
-    
-    print(result)
+# Test 3.2: Near-PSD Correlation Matrix Correction
+cin = pd.read_csv("../testfiles/data/testout_1.4.csv")
+
+# Apply Near-PSD correction to correlation matrix
+result = Utils.near_psd_correlation(cin)
+print(result)

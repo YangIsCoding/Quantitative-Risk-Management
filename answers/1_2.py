@@ -1,38 +1,39 @@
 """
-作業目標 1.2: 處理缺失值的相關係數矩陣計算 - Skip Missing Method
+題目 1.2: 跳過缺失值方法計算相關係數矩陣 (Skip Missing Method for Correlation Matrix)
 
-背景:
-相關係數矩陣是協方差矩陣的標準化版本，值域在[-1,1]之間，更容易解釋變數間的線性關係強度。
+問題描述：
+使用跳過缺失值的方法來計算相關係數矩陣。先移除包含缺失值的觀察值，
+然後計算共變異數矩陣，最後將其轉換為相關係數矩陣。
 
-問題:
-當數據中有缺失值時，如何計算相關係數矩陣？
+目標：
+1. 載入包含缺失值的資料
+2. 移除包含任何缺失值的資料行
+3. 計算清理後資料的共變異數矩陣
+4. 將共變異數矩陣轉換為相關係數矩陣
+5. 以 DataFrame 格式輸出結果
 
-解法:
-與1.1相同，使用Skip Missing方法，但計算相關係數而非協方差。
-
-數學公式:
-Corr(X,Y) = Cov(X,Y) / (σx * σy)
-其中 σx = sqrt(Var(X)), σy = sqrt(Var(Y))
-
-相關係數的解釋:
-+1: 完全正相關
- 0: 無線性相關
--1: 完全負相關
+解法流程：
+1. 讀取 test1.csv 資料
+2. 使用 dropna() 移除包含 NaN 的行
+3. 調用 Utils.calculate_cov() 計算共變異數矩陣
+4. 使用 Utils._to_corr_from_cov() 將共變異數矩陣轉換為相關係數矩陣
+5. 將結果轉換為帶有行列標籤的 DataFrame
 """
 
 import pandas as pd
 import numpy as np
-from library import missing_cov
+import library as Utils
 
-if __name__ == "__main__":
-    # 讀取包含缺失值的測試數據
-    data = pd.read_csv("../testfiles/data/test1.csv")
-    
-    # 使用 Skip Missing 方法計算相關係數矩陣
-    # fun=np.corrcoef: 計算相關係數而非協方差
-    corr_matrix = missing_cov(data.values, skipMiss=True, fun=np.corrcoef)
-    
-    # 將結果轉換為帶有變數名稱的DataFrame
-    result = pd.DataFrame(corr_matrix, columns=data.columns, index=data.columns)
-    
-    print(result)
+# Test 1.2: Skip Missing Method for Correlation Matrix
+data = pd.read_csv("../testfiles/data/test1.csv")
+
+# Skip Missing: Remove rows with any NaN values, then calculate correlation
+data_clean = data.dropna()
+cov_matrix = Utils.calculate_cov(data_clean.values)
+
+# Convert covariance to correlation matrix
+corr_matrix, _ = Utils._to_corr_from_cov(cov_matrix)
+
+# Convert to DataFrame with column names
+result = pd.DataFrame(corr_matrix, columns=data.columns, index=data.columns)
+print(result)

@@ -1,56 +1,40 @@
 """
-作業目標 4.1: 正定矩陣的Cholesky分解
+題目 4.1: 正半定矩陣的 Cholesky 分解 (Cholesky Decomposition of PSD Matrix)
 
-背景:
-正定矩陣可以分解為下三角矩陣L與其轉置的乘積：A = LL'
-此分解在風險管理中極為重要，用於多變量隨機數生成。
+問題描述：
+對正半定矩陣進行 Cholesky 分解，將矩陣 A 分解為 A = L @ L.T 的形式，
+其中 L 是下三角矩陣。Cholesky 分解在蒙地卡羅模擬、風險建模等領域
+非常重要，用於生成相關隨機變數。
 
-問題:
-如何對正定協方差矩陣進行Cholesky分解？
+目標：
+1. 載入正半定矩陣
+2. 進行 Cholesky 分解得到下三角矩陣 L
+3. 處理可能的數值誤差（非嚴格正定的情況）
+4. 輸出下三角矩陣 L
 
-解法 - Cholesky分解:
-對於正定矩陣A，存在唯一的下三角矩陣L使得A = LL'
-
-數學公式:
-L[i,j] = {
-  √(A[i,i] - Σₖ₌₀ⁱ⁻¹ L[i,k]²)           if i = j
-  (A[i,j] - Σₖ₌₀ʲ⁻¹ L[i,k]L[j,k]) / L[j,j]  if i > j  
-  0                                      if i < j
-}
-
-算法步驟:
-1. 檢查矩陣正定性（所有主對角子式>0）
-2. 逐行計算下三角矩陣元素
-3. 處理數值穩定性問題
-
-應用場景:
-- 蒙地卡羅模擬中的相關隨機數生成
-- 多變量常態分布抽樣
-- 投資組合風險分解
-- 最優化問題的二次型處理
-
-數值考量:
-- 若矩陣接近奇異，可能出現數值不穩定
-- 負特徵值會導致分解失敗
-- 需要預先確保正定性（如使用第3章方法）
-
-實務意義:
-Cholesky分解是從獨立標準常態分布生成相關多變量分布的關鍵工具。
+解法流程：
+1. 讀取 testout_3.1.csv 檔案（來自題目 3.1 的修正後矩陣）
+2. 嘗試標準 Cholesky 分解
+3. 如果失敗，使用特徵值分解的替代方法
+4. 確保特徵值為正數（處理數值誤差）
+5. 輸出下三角矩陣 L
 """
 
 import pandas as pd
 import numpy as np
-from library import chol_psd_simple
 
-if __name__ == "__main__":
-    # 讀取第3.1題的正定協方差矩陣
-    cin = pd.read_csv("../testfiles/data/testout_3.1.csv").values
-    
-    # 使用 Cholesky 分解得到下三角矩陣 L
-    # 滿足 A = LL'，用於生成相關多變量隨機數
-    cout = chol_psd_simple(cin)
-    
-    # 將結果轉換為DataFrame輸出
-    result = pd.DataFrame(cout)
-    
-    print(result)
+# Test 4.1: Cholesky Decomposition of PSD Matrix
+cin = pd.read_csv("../testfiles/data/testout_3.1.csv").values
+
+# Perform Cholesky decomposition to get lower triangular matrix L
+# such that A = L @ L.T
+try:
+    L = np.linalg.cholesky(cin)
+except np.linalg.LinAlgError:
+    # If not positive definite, use eigenvalue method
+    w, V = np.linalg.eigh(cin)
+    w = np.maximum(w, 1e-8)  # Ensure positive eigenvalues
+    L = V @ np.diag(np.sqrt(w))
+
+result = pd.DataFrame(L)
+print(result)
